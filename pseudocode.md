@@ -1,9 +1,9 @@
 # Reference-based PCR Duplicate Removal Assignment
 
-# Goal:
+# Goal
 Given a SAM file of uniquely mapped reads (that have been aligned already to a reference) that are single-ended, along with a set of known UMIs, create a tool that will remove all PCR duplicates and only retain one copy per read.
 
-# Define the problem:
+# Define the problem
 PCR duplicates may exist in the reads even after the quality filtering/trimming and alignment to a reference genome/transcriptome steps of DNA or RNA sequencing. We want to identify PCR duplicates and only keep one copy per read to reduce the source of noise in our data and ensure even amplification of DNA copies. After the alignment step in a stranded sequencing workflow, we can take the SAM file of uniquely mapped and single-ended reads, sort the SAM file, and check for PCR duplicates.
 
 For two reads to be considered duplicates that come from the same exact DNA or RNA molecule in our sample, we must check:
@@ -177,3 +177,5 @@ Output: 7
 Input: TRUE, 10, 3S5M2S
 Output: 15
 ```
+# Note to self:
+Started a Dedup lab notebook (git added to lab notebook repo). I have a few more notes there about what I wanna work on.
