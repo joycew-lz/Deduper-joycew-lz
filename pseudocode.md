@@ -13,7 +13,7 @@ For two reads to be considered duplicates that come from the same exact DNA or R
 - That the reads have matching UMIs, or unique molecular indices
     - (If the reads appear to not have a known UMI, don't consider retaining the read)
 
-# Write examples:
+# Write examples
 Include a properly formated sorted input sam file
 Include a properly formated expected output sam file
 
@@ -166,7 +166,7 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     if this_strand == TRUE: # reverse strand
         # if there is soft clipping, extract the soft clip-- make sure it IS the #S at the end of the cigar string!
             soft_clip_value = <>
-        strand_len = <> # #M, the total matched bases
+        strand_len = <> # #M, the total matched/unmatched bases
         # adj_pos = nonadj_pos + strand_len + soft_clip_value
 
     return adj_pos
