@@ -47,7 +47,7 @@ with open(umi, 'r') as f:
     for line in f:
         line = line.strip()
         UMIs.add(line) # add each line to the set of known UMIs
-    close umi
+    # close this
 
 # Sort the SAM file using samtools sort
 
