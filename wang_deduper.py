@@ -32,6 +32,47 @@ outfile = args.o
 umi = args.u
 
 #--------------
+# functions
+#--------------
+
+def strandedness(SAM_col_2):
+
+    '''
+    Given the bitwise FLAG (SAM col 2) in the SAM file, return FALSE if the strand is the forward or return TRUE if the strand is reverse.
+    '''
+
+    SAM_col_2 = int(SAM_col_2) # making sure it's an integer value for bitwise comparison
+
+    # TRUE indicates a reverse strand
+    if ((SAM_col_2 & 16) == 16):
+        rev_comp = True
+    else:
+        # FALSE indicates a forward strand
+        rev_comp = False
+
+    return(rev_comp)
+
+def extract_read_info(SAM_line):
+    '''
+    Given a SAM line (already stripped and split by tabs), extract the chromosome, strand (using strandedness(), which returns FALSE for a forward strand or TRUE for a reverse strand), non-adjusted start position, and cigar string. Return them as separate values.
+    '''
+
+    # get chr: col 3
+    chrom = SAM_line[2]
+
+    # get strand: col 2
+    strand = strandedness(SAM_line[1])  # FALSE for a forward strand, TRUE for a reverse strand
+
+    # get nonadj_pos, aka the 1-based leftmost position: col 4
+    nonadj_pos = int(SAM_line[3])
+
+    # get cigar, a string: col 6
+    cigar = SAM_line[5]
+
+    return chrom, strand, nonadj_pos, cigar
+
+
+#--------------
 # initialize things
 #--------------
 
@@ -53,12 +94,22 @@ seen_read = set()
 with open(outfile, "w") as o:
     # Read in the sorted SAM file
     with open(file, 'r') as f:
-        #  Parse through each line of input SAM file...
+        # Parse through each line of input SAM file
         for line in f:
+            # if line is a header line:
             if line.startswith("@"):
-                o.write(line)
                 # write line to output file
+                o.write(line)
+
+            # if line is not a header line:
             else:
                 line = line.strip().split("\t") # strip and split based on tab separation
                 this_umi = line[0].split(":")[7]
-                print(this_umi)
+                if this_umi not in UMIs:
+                    continue # skip if UMI is not in the set of known UMIs!
+
+                # get this_chrom, this_strand, nonadj_pos, cigar from two functions that I wrote!
+                this_chr, this_strand, nonadj_pos, cigar = extract_read_info(line)
+
+
+# regex... +
