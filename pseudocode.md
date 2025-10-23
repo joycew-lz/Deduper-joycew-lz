@@ -148,9 +148,10 @@ Output: 2, False, 76814284, 71M
 def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
 
     '''
-    Take  whether the strand is a forward or reverse strand (this_strand) and the "nonadjusted" 1-based, leftmost starting position of the read (SAM col 4) (nonadj_pos)
+    Take  whether the strand is a forward or reverse strand (this_strand),
+    and the "nonadjusted" 1-based, leftmost starting position of the read (SAM col 4) (nonadj_pos)
     to see if there is soft clipping happening (SAM col 6, indicated by 'S'),
-    and other instances in the cigar string (such as deletions, gaps, and lengths).
+    and other instances of the reference being consumed in the cigar string (such as deletions, gaps, and lengths).
     Calculate the actual, adjusted, 5' starting position.
     '''
     
@@ -167,13 +168,16 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     if this_strand == TRUE: # reverse strand
         # if there is soft clipping, extract the soft clip-- make sure it IS the #S at the end of the cigar string!
         soft_clip_value = <>
+
+        # consider things in the cigar that consumes reference!!!
         #M, the total matched/unmatched bases
         strand_len = <>
         #D, the deletions
         deletion = <>
         #N, the gaps
         gaps = <>
-        # adj_pos = nonadj_pos + strand_len + soft_clip_value + deletion
+
+        # adj_pos = nonadj_pos + strand_len + + deletion + gaps + soft_clip_value
 
     return adj_pos
 
