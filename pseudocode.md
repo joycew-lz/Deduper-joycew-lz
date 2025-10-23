@@ -49,9 +49,8 @@ with open(umi, 'r') as f:
         UMIs.add(line) # add each line to the set of known UMIs
     # close this
 
-# Sort the SAM file using samtools sort
-
 # Initialize a set for storing reads I've parsed through already: (UMI, chrom, strand, pos)
+# This should reset to be empty after I get through each chromosome in the SAM file.
 seen_read = set()
 
 # Open a file for writing the output SAM file
@@ -60,20 +59,20 @@ with open(outfile, "w") as o:
     with open(file, 'r') as f:
         #  Parse through each line of input SAM file...
         for line in f:
-            line = line.strip().split("\t") # strip and split based on tab separation
             # if the line is a header
                 # write line to output file
             
             else: # if the line is not a header
+                line = line.strip().split("\t") # strip and split based on tab separation
                 # check that the UMI is in the set of known UMIs
-                this_umi = line[0]
+                this_umi = line[0].split(":")[7]
                 if this_umi not in UMIs:
                     continue # skip if UMI is not in the set of known UMIs!
 
                 # get this_chrom, this_strand, nonadj_pos, cigar from two functions that I wrote!
                 this_chr, this_strand, nonadj_pos, cigar = extract_read_info(line)
 
-                # check to see if soft clipping is happening, and to get the actual, adjusted, 5' starting pos:
+                # get the actual, adjusted, 5' starting pos:
                 this_pos = get_adj_pos(this_strand, nonadj_pos, cigar)
             
                 # add all these to temporary storage
@@ -81,8 +80,9 @@ with open(outfile, "w") as o:
 
                 # identify if this is a PCR duplicate!
                 if current_read not in seen_read:
-                    seen_read.add(current_read)
-                    o.write("\t".join(line) + "\n") # write the current line as the first read in the output file, tab separated and with new lines
+                    if this_chr != :
+                        seen_read.add(current_read)
+                        o.write("\t".join(line) + "\n") # write the current line as the first read in the output file, tab separated and with new lines
                 else:
                     continue # skip PCR duplicate!
         
@@ -149,33 +149,39 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
 
     '''
     Take  whether the strand is a forward or reverse strand (this_strand) and the "nonadjusted" 1-based, leftmost starting position of the read (SAM col 4) (nonadj_pos)
-    to see if there is soft clipping happening (SAM col 6, indicated by 'S'). 
+    to see if there is soft clipping happening (SAM col 6, indicated by 'S'),
+    and other instances in the cigar string (such as deletions, gaps, and lengths).
     Calculate the actual, adjusted, 5' starting position.
     '''
     
-    # check to see if soft clipping is present in the cigar string
+    # check to see if there's something in the cigar string to account for (soft clipping, deletions, etc...)
     <>
         if not:
         adj_pos = nonadj_pos
 
     if this_strand == FALSE: # forward strand
         # if there is soft clipping, extract the soft clip-- make sure it's NOT the #S at the end of the cigar string!
-            soft_clip_value = <>
+        soft_clip_value = <>
         # adj_pos = nonadj_pos - soft_clip_value
     
     if this_strand == TRUE: # reverse strand
         # if there is soft clipping, extract the soft clip-- make sure it IS the #S at the end of the cigar string!
-            soft_clip_value = <>
-        strand_len = <> # #M, the total matched/unmatched bases
-        # adj_pos = nonadj_pos + strand_len + soft_clip_value
+        soft_clip_value = <>
+        #M, the total matched/unmatched bases
+        strand_len = <>
+        #D, the deletions
+        deletion = <>
+        #N, the gaps
+        gaps = <>
+        # adj_pos = nonadj_pos + strand_len + soft_clip_value + deletion
 
     return adj_pos
 
-Input: FALSE, 10, 3S5M2S
+Input: False, 10, 3S5M2S
 Output: 7
 
-Input: TRUE, 10, 3S5M2S
-Output: 15
+Input: True, 10, 3S5M2S
+Output: 17
 ```
 # Note to self:
-Started a Dedup lab notebook (git added to lab notebook repo). I have a few more notes there about what I wanna work on.
+Get rid of the Dedup lab notebook (git added to lab notebook repo), I guess, since I won't be using it...
