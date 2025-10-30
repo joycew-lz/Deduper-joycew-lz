@@ -99,21 +99,37 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
         - then add trailing soft clipping (S at the end of the cigar string)
     '''
     
-    # parse through cigar string
+    # Parse through cigar string first:
+    cigar_list = re.findall(r'\d+[MIDNS]', cigar) # cigar_list output is a list of strings, like ['3S', '5M', '10N', '2S']
 
-    cigar_tuples = re.findall()
-    # no valid CIGAR info
-    if not cigar_tuples =
-        return nonadj_pos
+    # now, need to separate the number from the letter;
 
-    if this_strand == FALSE: # forward strand
-        # if there is soft clipping, extract the soft clip-- make sure it's NOT the #S at the end of the cigar string!
-        soft_clip_value = <>
-        # adj_pos = nonadj_pos - soft_clip_value
+    # set up a list of tuples that will store integer(s)-string pairs, like [(3, 'S'), (5, 'M'), (10, 'N'), (2, 'S')]
+    cigar_list_tuples = []
+    # Parse through cigar_list;
+        # for a number(s)-letter combo (that are both characters in a string), like '3S'
+    for num_letter_combo in cigar_list:
+        numbers = int(num_letter_combo[:-1])# extract everything but the last character (the number(s)), and make sure it's an integer
+        letter = num_letter_combo[-1] # extract the last character (the letter)
+        # and convert it to an integer
+        cigar_list_tuples.append((numbers, letter))
+
+    if this_strand == False: # forward strand
+        if cigar_list_tuples[0][1] == "S":
+            leading_soft = cigar_list_tuples[0][0]
+        else:
+            leading_soft = 0
+        adj_pos = nonadj_pos - leading_soft
     
-    if this_strand == TRUE: # reverse strand
-        # if there is soft clipping, extract the soft clip-- make sure it IS the #S at the end of the cigar string!
-        soft_clip_value = <>
+    if this_strand == True: # reverse strand
+
+        if cigar_list_tuples[-1][1] == "S":
+            trailing_soft = cigar_list_tuples[-1][0]
+        else:
+            trailing_soft = 0
+
+        reference_consuming = {"M", "D", "N"}
+        
 
         # consider things in the cigar that consumes reference!!!
         #M, the total matched/unmatched bases
