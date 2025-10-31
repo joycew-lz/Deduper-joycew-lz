@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 # make sure the input SAM file is sorted...
-
-# while writing the code, 
-# run with: ./wang_deduper.py -u STL96.txt -f unit_test/sorted_input.sam -o temp_unit_test_output.sam
-
-# remember to bin usr/time -v when actually running!
+# command line: cp /projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam .
+    # samtools sort C1_SE_uniqAlign.sam -o C1_SE_uniqAlign.sorted.sam
+    # removed original file
 
 #--------------
 # import modules
@@ -20,10 +18,10 @@ import re
 
 def get_args():
     parser = argparse.ArgumentParser(description="to deduplicate single-ended reads given a SAM file of uniquely mapped reads and a file with a list of UMIs")
-    parser.add_argument("-f", help="designates file path to sorted SAM file", type=str)
-    parser.add_argument("-o", help="designates file path to deduplicated SAM file", type=str)
-    parser.add_argument("-u", help="designates file containing the list of UMIs", type=str)
-    parser.add_argument("-r", help="designated file path to report values from the deduplicated SAME file", type=str)
+    parser.add_argument("-f", help="designates file path to sorted SAM file", type=str, required=True)
+    parser.add_argument("-o", help="designates file path to deduplicated SAM file", type=str, required=True)
+    parser.add_argument("-u", help="designates file containing the list of UMIs", type=str, required=True)
+    parser.add_argument("-r", help="designated file path to report values from the deduplicated SAM file", type=str, required=False)
     return parser.parse_args()
 
 args = get_args()
@@ -32,6 +30,7 @@ args = get_args()
 file = args.f
 outfile = args.o
 umi = args.u
+report = args.r
 
 #--------------
 # functions
@@ -103,7 +102,6 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     cigar_list = re.findall(r'\d+[MIDNS]', cigar) # cigar_list output is a list of strings, like ['3S', '5M', '10N', '2S']
 
     # now, need to separate the number from the letter;
-
     # set up a list of tuples that will store integer(s)-string pairs, like [(3, 'S'), (5, 'M'), (10, 'N'), (2, 'S')]
     cigar_list_tuples = []
     # Parse through cigar_list;
@@ -111,7 +109,7 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     for num_letter_combo in cigar_list:
         numbers = int(num_letter_combo[:-1])# extract everything but the last character (the number(s)), and make sure it's an integer
         letter = num_letter_combo[-1] # extract the last character (the letter)
-        # and convert it to an integer
+        # and append it to the list of tuples, as a tuple (number(s), letter)
         cigar_list_tuples.append((numbers, letter))
 
     if this_strand == False: # forward strand
@@ -122,24 +120,16 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
         adj_pos = nonadj_pos - leading_soft
     
     if this_strand == True: # reverse strand
-
+        reference_consuming = {"M", "D", "N"}
+        reference_consuming_total = 0
+        for number, letter in cigar_list_tuples:
+            if letter in reference_consuming:
+                reference_consuming_total += number
         if cigar_list_tuples[-1][1] == "S":
             trailing_soft = cigar_list_tuples[-1][0]
         else:
             trailing_soft = 0
-
-        reference_consuming = {"M", "D", "N"}
-        
-
-        # consider things in the cigar that consumes reference!!!
-        #M, the total matched/unmatched bases
-        strand_len = <>
-        #D, the deletions
-        deletion = <>
-        #N, the gaps
-        gaps = <>
-
-        # adj_pos = nonadj_pos + strand_len + + deletion + gaps + soft_clip_value
+        adj_pos = nonadj_pos + trailing_soft + reference_consuming_total
 
     return adj_pos
 
@@ -157,6 +147,13 @@ with open(umi, 'r') as f:
         line = line.strip()
         UMIs.add(line) # add each line to the set of known UMIs
 
+# Initialize counters
+header_lines = 0
+unique_reads = 0
+wrong_UMIs = 0
+duplicates_removed = 0
+counts_per_chr = {}
+
 #--------------
 # code
 #--------------
@@ -166,29 +163,31 @@ with open(outfile, "w") as o:
     # Read in the sorted SAM file
     with open(file, 'r') as f:
         # Track which chromosome I'm on to parse through the reads by chromosome
-        current_chr = None
+        current_chr = ""
         # Initialize a set for storing reads I've parsed through already: (UMI, chrom, strand, pos)
-        seen_read = set() # This should reset per chromosome
+        seen_reads = set() # This should reset per chromosome
 
         # Parse through each line of input SAM file
         for line in f:
             # if line is a header line:
             if line.startswith("@"):
+                header_lines += 1
                 # write line to output file
                 o.write(line)
                 continue # skip the rest if the line is a header line
 
             # if line is not a header line:
             line = line.strip().split("\t") # strip and split based on tab separation
-            this_umi = line[0].split(":")[7]
+            this_umi = line[0].split(":")[-1]
             if this_umi not in UMIs:
+                wrong_UMIs += 1
                 continue # skip the rest if UMI is not in the set of known UMIs
 
             # get this_chr, this_strand, nonadj_pos, and cigar-- from two functions that I wrote
             this_chr, this_strand, nonadj_pos, cigar = extract_read_info(line)
 
             if this_chr != current_chr:
-                seen_read = set() # reset seen reads if this_chr is "new"
+                seen_reads = set() # reset seen reads if this_chr is "new"
                 current_chr = this_chr # update current_chr to the "new" chromosome
 
             # get the actual, adjusted, 5' starting pos using a function I wrote
@@ -198,13 +197,43 @@ with open(outfile, "w") as o:
             read_id = (this_umi, this_chr, this_strand, this_pos)
 
             # identify if this is a PCR duplicate!
-            if read_id not in seen_read:
-                # if read_id is not in seen_read, write it to the output
-                seen_read.add(read_id)
+
+            # if read_id isn't a duplicate:
+            if read_id not in seen_reads:
+                unique_reads += 1
+                # if read_id is not in seen_reads, write it to the output
+                seen_reads.add(read_id)
+
+                # add to counts per chromosome
+                if this_chr not in counts_per_chr:
+                    counts_per_chr[this_chr] = 0
+                counts_per_chr[this_chr] += 1
+
                 # write the current line as a read in the output file, tab separated and with new lines
                 o.write("\t".join(line) + "\n")
+            
+            # skip PCR duplicate!
             else:
-                # skip PCR duplicate!
+                duplicates_removed += 1
                 continue
 
-# regex... +
+#--------------
+# report
+#--------------
+
+if args.r:
+    with open(report, "w") as r:
+        r.write(
+            f"Deduplicating for: {file}\n"
+            f"Number of header lines: {header_lines}\n"
+            f"Number of unique reads: {unique_reads}\n"
+            f"Number of wrong UMIs: {wrong_UMIs}\n"
+            f"Number of duplicates removed: {duplicates_removed}\n"
+        )
+        r.write(f"\nReads per chromosome:\n")
+        for chrom, count in sorted(counts_per_chr.items()):
+            r.write(f"{chrom}\t{count}\n")
+
+# test with: ./wang_deduper.py -f unit_test/sorted_input.sam -o unit_test/temp_unit_test_actual_output.sam -u STL96.txt
+# run with: 
+    # /usr/bin/time -v ./wang_deduper.py -f C1_SE_uniqAlign.sorted.sam -o C1_SE_uniqAlign.sorted_output.sam -u STL96.txt -r report.txt
