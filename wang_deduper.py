@@ -237,3 +237,4 @@ if args.r:
 # test with: ./wang_deduper.py -f unit_test/sorted_input.sam -o unit_test/temp_unit_test_actual_output.sam -u STL96.txt
 # run with: 
     # /usr/bin/time -v ./wang_deduper.py -f C1_SE_uniqAlign.sorted.sam -o C1_SE_uniqAlign.sorted_output.sam -u STL96.txt -r report.txt
+    
