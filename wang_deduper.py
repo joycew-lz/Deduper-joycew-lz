@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# make sure the input SAM file is sorted...
+# make sure the input SAM file is sorted.
 # command line: cp /projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam .
     # samtools sort C1_SE_uniqAlign.sam -o C1_SE_uniqAlign.sorted.sam
     # removed original file
@@ -13,7 +13,7 @@ import argparse
 import re
 
 #--------------
-# argparse: ADD REQUIRED = TRUE LATER
+# argparse
 #--------------
 
 def get_args():
@@ -134,7 +134,7 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     return adj_pos
 
 #--------------
-# initialize things
+# initialize variables
 #--------------
 
 # Initialize a set for known UMIs
