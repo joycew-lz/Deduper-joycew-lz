@@ -21,7 +21,7 @@ def get_args():
     parser.add_argument("-f", help="designates file path to sorted SAM file", type=str, required=True)
     parser.add_argument("-o", help="designates file path to deduplicated SAM file", type=str, required=True)
     parser.add_argument("-u", help="designates file containing the list of UMIs", type=str, required=True)
-    parser.add_argument("-r", help="designated file path to report values from the deduplicated SAM file", type=str, required=False)
+    parser.add_argument("-r", help="designates file path to report values from the deduplicated SAM file", type=str, required=False)
     return parser.parse_args()
 
 args = get_args()
@@ -81,7 +81,7 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     '''
     Takes:
     whether the strand is a forward or reverse strand (this_strand),
-    the "nonadjusted" 1-based, leftmost starting position of the read (SAM col 4) (nonadj_pos),
+    the non-adjusted, 1-based, leftmost starting position of the read (SAM col 4) (nonadj_pos),
     and the cigar string (cigar).
 
     Checks the cigar string to see if soft-clipping (S) is occuring,
@@ -237,4 +237,3 @@ if args.r:
 # test with: ./wang_deduper.py -f unit_test/sorted_input.sam -o unit_test/temp_unit_test_actual_output.sam -u STL96.txt
 # run with: 
     # /usr/bin/time -v ./wang_deduper.py -f C1_SE_uniqAlign.sorted.sam -o C1_SE_uniqAlign.sorted_output.sam -u STL96.txt -r report.txt
-    
