@@ -10,7 +10,7 @@ This is a **Reference Based PCR Duplication Remover**. After the alignment step 
 ## What is considered a duplicate?
 For two reads to be considered duplicates that come from the same exact DNA or RNA molecule in our sample, the following conditions must be met:
 - The reads are on the same chromosome
-- The reads have the same 5' start position (to adjust for soft-clipping and reference-consuming)
+- The reads have the same 5' start position (after adjusting for soft-clipping and reference-consuming operations)
 - The strands are the same
 - The reads have matching UMIs
 - Each read must have known UMIs (match a UMI in the set of known UMIs)
