@@ -15,7 +15,7 @@ For two reads to be considered duplicates that come from the same exact DNA or R
 - The reads have matching UMIs
 - Each read must have known UMIs (match a UMI in the set of known UMIs)
 
-## Repository Structure
+## Repository structure
 - `wang_deduper.py`: Python script that deduplicates single-ended reads.
 - `unit_test/`: Directory containing sample data for developing and testing the pipeline, the expected output, and the documentation explaining all test cases.
 - `test.sam`: Additional sorted SAM file used for developing and testing the pipeline.
