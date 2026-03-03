@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 # make sure the input SAM file is sorted.
-# command line: cp /projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam .
+
+# for the purposes of this assignment: 
+    # cp /projects/bgmp/shared/deduper/C1_SE_uniqAlign.sam .
     # samtools sort C1_SE_uniqAlign.sam -o C1_SE_uniqAlign.sorted.sam
     # removed original file
 
@@ -92,25 +94,30 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
     The calculated actual, adjusted 5' position based on the following rules:
     - if is a Forward strand:
         - subtract leading soft clipping (S at the start of the cigar string)
-    - if is a Reverse strand:
+    - elif is a Reverse strand:
         - add deletions (D) and skipped regions (N) and mismatches/matches (M)
         - DO NOT add insertions (I), which do not consume reference
         - then add trailing soft clipping (S at the end of the cigar string)
     '''
     
     # Parse through cigar string first:
-    cigar_list = re.findall(r'\d+[MIDNS]', cigar) # cigar_list output is a list of strings, like ['3S', '5M', '10N', '2S']
+    cigar_list = re.findall(r'(\d+)([MIDNSHP=X])', cigar) # cigar_list output is a list of strings, like ['3S', '5M', '10N', '2S']
+    # expanded cigar regex
 
     # now, need to separate the number from the letter;
     # set up a list of tuples that will store integer(s)-string pairs, like [(3, 'S'), (5, 'M'), (10, 'N'), (2, 'S')]
     cigar_list_tuples = []
-    # Parse through cigar_list;
+
+    # Parse through cigar_list by unpacking the tuple;
         # for a number(s)-letter combo (that are both characters in a string), like '3S'
-    for num_letter_combo in cigar_list:
-        numbers = int(num_letter_combo[:-1])# extract everything but the last character (the number(s)), and make sure it's an integer
-        letter = num_letter_combo[-1] # extract the last character (the letter)
+    for numbers, letter in cigar_list: # unpack the tuple
+        numbers = int(numbers) # convert numberic string to int
         # and append it to the list of tuples, as a tuple (number(s), letter)
         cigar_list_tuples.append((numbers, letter))
+
+    # If cigar_list_tuples is empty or '*' (unmapped), safely return nonadj_pos without indexing cigar parts
+    if not cigar_list_tuples:
+        return nonadj_pos
 
     if this_strand == False: # forward strand
         if cigar_list_tuples[0][1] == "S":
@@ -119,8 +126,8 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
             leading_soft = 0
         adj_pos = nonadj_pos - leading_soft
     
-    if this_strand == True: # reverse strand
-        reference_consuming = {"M", "D", "N"}
+    elif this_strand == True: # reverse strand
+        reference_consuming = {'M', 'D', 'N', 'X', '='}
         reference_consuming_total = 0
         for number, letter in cigar_list_tuples:
             if letter in reference_consuming:
@@ -178,6 +185,11 @@ with open(outfile, "w") as o:
 
             # if line is not a header line:
             line = line.strip().split("\t") # strip and split based on tab separation
+
+            # validate that mandatory SAM fields exist to avoid IndexError (col 1..11):
+            if len(line) < 11:
+                continue
+
             this_umi = line[0].split(":")[-1]
             if this_umi not in UMIs:
                 wrong_UMIs += 1
