@@ -115,7 +115,7 @@ def get_adj_pos(this_strand, nonadj_pos, cigar) -> int:
         # and append it to the list of tuples, as a tuple (number(s), letter)
         cigar_list_tuples.append((numbers, letter))
 
-    # If cigar_list_tuples is empty or '*' (unmapped), safely return nonadj_pos without indexing cigar parts
+    # If cigar_list_tuples is empty, safely return nonadj_pos without indexing cigar parts
     if not cigar_list_tuples:
         return nonadj_pos
 
