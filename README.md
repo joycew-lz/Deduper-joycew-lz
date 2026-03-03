@@ -3,7 +3,7 @@
 ## Overview
 PCR duplicates may remain in sequencing reads even after quality filtering, trimming, and alignment to a reference genome or transcriptome. The goal is to identify PCR duplicates and only keep one copy per read to reduce the source of noise in the data and ensure even amplification of DNA copies. 
 
-This is a **Reference Based PCR Duplication Remover**. After the alignment step in a stranded sequencing workflow, the SAM file of uniquely mapped and single-ended reads can be sorted and checked for PCR duplicates using this tool.
+This is a **Reference-Based PCR Duplication Remover**. After the alignment step in a stranded sequencing workflow, the SAM file of uniquely mapped and single-ended reads can be sorted and checked for PCR duplicates using this tool.
 
  Given a SAM file sorted by chromosome and leftmost start position of uniquely mapped reads (that have been aligned already to a reference) that are single-ended, along with a set of known unique molecular indices (UMIs), this tool removes all PCR duplicates and only retains one copy per read, outputting a deduplicated SAM file.
 
